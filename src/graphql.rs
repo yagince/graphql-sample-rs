@@ -56,8 +56,9 @@ impl MutationFields for Mutation {
         trail: &QueryTrail<'_, User, Walked>,
         name: String,
         tags: Vec<String>,
+        companies: Vec<String>,
     ) -> FieldResult<User> {
-        use crate::schema::{tags, users};
+        use crate::schema::{companies, employments, tags, users};
 
         let new_user = models::NewUser { name: name };
 
@@ -74,6 +75,32 @@ impl MutationFields for Mutation {
                     diesel::insert_into(tags::table)
                         .values(&values)
                         .execute(&executor.context().db_con)?;
+
+                    companies
+                        .into_iter()
+                        .map(|company_name| {
+                            let company = companies::table
+                                .filter(companies::name.eq(&company_name))
+                                .first::<models::Company>(&executor.context().db_con)
+                                .optional()?;
+
+                            let company = match company {
+                                Some(x) => x,
+                                _ => diesel::insert_into(companies::table)
+                                    .values(companies::name.eq(&company_name))
+                                    .get_result::<models::Company>(&executor.context().db_con)?,
+                            };
+
+                            diesel::insert_into(employments::table)
+                                .values((
+                                    employments::user_id.eq(&user.id),
+                                    employments::company_id.eq(&company.id),
+                                ))
+                                .execute(&executor.context().db_con)?;
+
+                            Ok(company)
+                        })
+                        .collect::<Result<Vec<_>, diesel::result::Error>>()?;
                     Ok(user)
                 })
         })?;

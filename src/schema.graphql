@@ -11,6 +11,7 @@ type Mutation {
   createUser(
     name: String!
     tags: [String!]!
+    companies: [String!]!
   ): User! @juniper(ownership: "owned")
 }
 
