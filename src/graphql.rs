@@ -61,20 +61,22 @@ impl MutationFields for Mutation {
 
         let new_user = models::NewUser { name: name };
 
-        let model_user = diesel::insert_into(users::table)
-            .values(&new_user)
-            .get_result::<models::User>(&executor.context().db_con)
-            .and_then(|user| {
-                let values = tags
-                    .into_iter()
-                    .map(|tag| (tags::user_id.eq(&user.id), tags::name.eq(tag)))
-                    .collect_vec();
+        let model_user = executor.context().db_con.transaction(|| {
+            diesel::insert_into(users::table)
+                .values(&new_user)
+                .get_result::<models::User>(&executor.context().db_con)
+                .and_then(|user| {
+                    let values = tags
+                        .into_iter()
+                        .map(|tag| (tags::user_id.eq(&user.id), tags::name.eq(tag)))
+                        .collect_vec();
 
-                diesel::insert_into(tags::table)
-                    .values(&values)
-                    .execute(&executor.context().db_con)?;
-                Ok(user)
-            })?;
+                    diesel::insert_into(tags::table)
+                        .values(&values)
+                        .execute(&executor.context().db_con)?;
+                    Ok(user)
+                })
+        })?;
 
         let user = User::new_from_model(&model_user);
         User::eager_load_all_children(user, &[model_user], &executor.context(), trail)
