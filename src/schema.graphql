@@ -9,14 +9,15 @@ type Query {
 
 type Mutation {
   createUser(
-    name: String!,
+    name: String!
+    tags: [String!]!
   ): User! @juniper(ownership: "owned")
 }
 
 type User {
   id: ID! @juniper(ownership: "owned")
   name: String!
-  tags: [Tag!]! @juniper(ownership: "owned")
+  tags: [Tag!]!
 }
 
 type Tag {
