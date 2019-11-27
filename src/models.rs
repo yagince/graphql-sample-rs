@@ -18,3 +18,16 @@ pub struct Tag {
     pub user_id: i32,
     pub name: String,
 }
+
+#[derive(Queryable, Clone, PartialEq, Debug)]
+pub struct Company {
+    pub id: i32,
+    pub name: String,
+}
+
+#[derive(Queryable, Clone, PartialEq, Debug)]
+pub struct Employment {
+    pub id: i32,
+    pub user_id: i32,
+    pub company_id: i32,
+}

@@ -6,7 +6,7 @@ use futures01::future::Future;
 
 use juniper::http::playground::playground_source;
 use juniper::{http::GraphQLRequest, Executor, FieldResult};
-use juniper_eager_loading::{prelude::*, EagerLoading, HasMany};
+use juniper_eager_loading::{prelude::*, EagerLoading, HasMany, HasManyThrough};
 use juniper_from_schema::graphql_schema_from_file;
 
 use diesel::prelude::*;
@@ -91,6 +91,9 @@ pub struct User {
 
     #[has_many(root_model_field = tag)]
     tags: HasMany<Tag>,
+
+    #[has_many_through(join_model = models::Employment)]
+    companies: HasManyThrough<Company>,
 }
 
 impl UserFields for User {
@@ -109,21 +112,13 @@ impl UserFields for User {
     ) -> FieldResult<&Vec<Tag>> {
         self.tags.try_unwrap().map_err(Into::into)
     }
-}
 
-impl juniper_eager_loading::LoadFrom<models::User> for models::Tag {
-    type Error = diesel::result::Error;
-    type Context = Context;
-
-    fn load(
-        users: &[models::User],
-        _field_args: &(),
-        context: &Self::Context,
-    ) -> Result<Vec<models::Tag>, Self::Error> {
-        use crate::schema::tags;
-        tags::table
-            .filter(tags::user_id.eq_any(users.iter().map(|x| x.id).collect_vec()))
-            .load::<models::Tag>(&context.db_con)
+    fn field_companies(
+        &self,
+        _: &Executor<'_, Context>,
+        _: &QueryTrail<'_, Company, Walked>,
+    ) -> FieldResult<&Vec<Company>> {
+        self.companies.try_unwrap().map_err(Into::into)
     }
 }
 
@@ -144,6 +139,70 @@ impl TagFields for Tag {
 
     fn field_name(&self, _: &Executor<'_, Context>) -> FieldResult<&String> {
         Ok(&self.tag.name)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, EagerLoading)]
+#[eager_loading(context = Context, error = diesel::result::Error)]
+pub struct Company {
+    company: models::Company,
+}
+
+impl CompanyFields for Company {
+    fn field_id(&self, _: &Executor<'_, Context>) -> FieldResult<juniper::ID> {
+        Ok(juniper::ID::new(self.company.id.to_string()))
+    }
+
+    fn field_name(&self, _: &Executor<'_, Context>) -> FieldResult<&String> {
+        Ok(&self.company.name)
+    }
+}
+
+impl juniper_eager_loading::LoadFrom<models::User> for models::Tag {
+    type Error = diesel::result::Error;
+    type Context = Context;
+
+    fn load(
+        users: &[models::User],
+        _field_args: &(),
+        context: &Self::Context,
+    ) -> Result<Vec<models::Tag>, Self::Error> {
+        use crate::schema::tags;
+        tags::table
+            .filter(tags::user_id.eq_any(users.iter().map(|x| x.id).collect_vec()))
+            .load::<models::Tag>(&context.db_con)
+    }
+}
+
+impl juniper_eager_loading::LoadFrom<models::Employment> for models::Company {
+    type Error = diesel::result::Error;
+    type Context = Context;
+
+    fn load(
+        employments: &[models::Employment],
+        _field_args: &(),
+        context: &Self::Context,
+    ) -> Result<Vec<models::Company>, Self::Error> {
+        use crate::schema::companies;
+        companies::table
+            .filter(companies::id.eq_any(employments.iter().map(|x| x.company_id).collect_vec()))
+            .load::<models::Company>(&context.db_con)
+    }
+}
+
+impl juniper_eager_loading::LoadFrom<models::User> for models::Employment {
+    type Error = diesel::result::Error;
+    type Context = Context;
+
+    fn load(
+        users: &[models::User],
+        _field_args: &(),
+        context: &Self::Context,
+    ) -> Result<Vec<models::Employment>, Self::Error> {
+        use crate::schema::employments;
+        employments::table
+            .filter(employments::user_id.eq_any(users.iter().map(|x| x.id).collect_vec()))
+            .load::<models::Employment>(&context.db_con)
     }
 }
 

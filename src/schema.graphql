@@ -18,10 +18,16 @@ type User {
   id: ID! @juniper(ownership: "owned")
   name: String!
   tags: [Tag!]!
+  companies: [Company!]!
 }
 
 type Tag {
   id: ID! @juniper(ownership: "owned")
   userId: ID! @juniper(ownership: "owned")
+  name: String!
+}
+
+type Company {
+  id: ID! @juniper(ownership: "owned")
   name: String!
 }
