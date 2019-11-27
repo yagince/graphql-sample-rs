@@ -11,3 +11,10 @@ pub struct User {
 pub struct NewUser {
     pub name: String,
 }
+
+#[derive(Queryable)]
+pub struct Tag {
+    pub id: i32,
+    pub user_id: i32,
+    pub name: String,
+}

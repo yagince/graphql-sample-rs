@@ -16,4 +16,11 @@ type Mutation {
 type User {
   id: ID! @juniper(ownership: "owned")
   name: String!
+  tags: [Tag!]! @juniper(ownership: "owned")
+}
+
+type Tag {
+  id: ID! @juniper(ownership: "owned")
+  userId: ID! @juniper(ownership: "owned")
+  name: String!
 }

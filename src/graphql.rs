@@ -71,6 +71,19 @@ impl UserFields for User {
     fn field_name(&self, _: &Executor<'_, Context>) -> FieldResult<&String> {
         Ok(&self.name)
     }
+
+    fn field_tags(
+        &self,
+        executor: &Executor<'_, Context>,
+        _trail: &QueryTrail<'_, Tag, Walked>,
+    ) -> FieldResult<Vec<Tag>> {
+        use crate::schema::tags;
+        tags::table
+            .filter(tags::user_id.eq(&self.id))
+            .load::<crate::models::Tag>(&executor.context().db_con)
+            .and_then(|tags| Ok(tags.into_iter().map_into().collect()))
+            .map_err(Into::into)
+    }
 }
 
 impl From<crate::models::User> for User {
@@ -78,6 +91,36 @@ impl From<crate::models::User> for User {
         Self {
             id: user.id,
             name: user.name,
+        }
+    }
+}
+
+pub struct Tag {
+    id: i32,
+    user_id: i32,
+    name: String,
+}
+
+impl TagFields for Tag {
+    fn field_id(&self, _: &Executor<'_, Context>) -> FieldResult<juniper::ID> {
+        Ok(juniper::ID::new(self.id.to_string()))
+    }
+
+    fn field_user_id(&self, _: &Executor<'_, Context>) -> FieldResult<juniper::ID> {
+        Ok(juniper::ID::new(self.user_id.to_string()))
+    }
+
+    fn field_name(&self, _: &Executor<'_, Context>) -> FieldResult<&String> {
+        Ok(&self.name)
+    }
+}
+
+impl From<crate::models::Tag> for Tag {
+    fn from(tag: crate::models::Tag) -> Self {
+        Self {
+            id: tag.id,
+            user_id: tag.user_id,
+            name: tag.name,
         }
     }
 }
