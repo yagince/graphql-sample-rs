@@ -1,0 +1,17 @@
+[package]
+name = "graphql_example"
+version = "0.0.1"
+authors = ["yagince <straitwalk@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+actix-web = "1.0.9"
+actix-cors = "0.1.0"
+juniper = "0.14.1"
+juniper-from-schema = "0.5.1"
+juniper-eager-loading = "0.4.2"
+diesel = { version = "1.4.3", features = ["postgres", "r2d2"] }
+r2d2 = "0.8.7"
+futures01 = "0.1.29"
+serde_json = "1.0.42"
+itertools = "0.8.2"

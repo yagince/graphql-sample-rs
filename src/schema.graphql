@@ -1,0 +1,19 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+type Query {
+  users: [User!]! @juniper(ownership: "owned")
+}
+
+type Mutation {
+  createUser(
+    name: String!,
+  ): User! @juniper(ownership: "owned")
+}
+
+type User {
+  id: ID! @juniper(ownership: "owned")
+  name: String!
+}
