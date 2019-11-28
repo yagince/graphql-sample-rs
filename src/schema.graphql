@@ -19,7 +19,7 @@ type User {
   id: ID! @juniper(ownership: "owned")
   name: String!
   tags: [Tag!]!
-  companies: [Company!]!
+  companies: [CompanyWithUser!]!
 }
 
 type Tag {
@@ -28,7 +28,7 @@ type Tag {
   name: String!
 }
 
-type Company {
+type CompanyWithUser {
   id: ID! @juniper(ownership: "owned")
   name: String!
 }
